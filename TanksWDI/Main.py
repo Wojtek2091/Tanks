@@ -1,7 +1,9 @@
 from LevelBuilder import *
 
+
 # GameHandler iteruje po każdej grupie Spritów w lście i wywołuche ich metody render i update
 class GameHandler:
+    # groups: 0-player 1-neutral, 2-enemy, 3-bullets
     def __init__(self,disaplysurface, groupsList = None):
         self.displaysurface = disaplysurface
         if groupsList is None:
@@ -10,11 +12,16 @@ class GameHandler:
             self.groupsList = groupsList
 
     def update(self):
-        self.groupsList[0].update(self.groupsList[1])
+        self.groupsList[0].update(self, self.groupsList[1])
+        self.groupsList[1].update(self.groupsList[3], self.groupsList[1])
+        self.groupsList[3].update()
 
     def render(self, displaysurface):
         for group in self.groupsList:
             group.draw(displaysurface)
+
+    def addBullet(self, bullet):
+        self.groupsList[3].add(bullet)
 
 
 def main():
@@ -27,7 +34,7 @@ def main():
     pygame.display.set_caption('Tanki!')
     gameHandler = GameHandler(DISPLAYSURFACE, buildLevel())
     while True:  # główna pętla
-        DISPLAYSURFACE.fill((0, 0, 0))
+        DISPLAYSURFACE.fill((255, 255, 255))
         gameHandler.render(DISPLAYSURFACE)
         gameHandler.update()
         for event in pygame.event.get():
