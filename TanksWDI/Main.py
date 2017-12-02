@@ -34,7 +34,7 @@ def main():
     pygame.display.set_caption('Tanki!')
     gameHandler = GameHandler(DISPLAYSURFACE, buildLevel())
     while True:  # główna pętla
-        DISPLAYSURFACE.fill((255, 255, 255))
+        DISPLAYSURFACE.fill((140, 140, 140))
         gameHandler.render(DISPLAYSURFACE)
         gameHandler.update()
         for event in pygame.event.get():

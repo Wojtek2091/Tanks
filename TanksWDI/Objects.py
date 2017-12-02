@@ -66,7 +66,7 @@ class Tank(GameObject):
 
 #  klasa rozszerza klase tank
 class Player(Tank):
-    bulletSpeed = 0
+    bulletSpeed = 20
 
     def __init__(self, x, y, image, hp, speed, bulletImg, delay):
         super().__init__(x, y, image, hp, speed, bulletImg)
