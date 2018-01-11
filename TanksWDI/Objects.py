@@ -14,7 +14,7 @@ class GameObject(pygame.sprite.Sprite):
 
     # Sprawdza czy obiekt nie jest poza mapa
     def hasGoodPos(self):
-        if self.rect.x < 0 or self.rect.y <  0 or self.rect.x > 1300-self.image.get_width() or self.rect.y > 700-self.image.get_height():
+        if self.rect.x < 10 or self.rect.y <  10 or self.rect.x > 1050 + 9 -self.image.get_width() or self.rect.y > 720-10 -self.image.get_height():
             return False
         else:
             return True
@@ -55,48 +55,50 @@ class Tank(GameObject):
     def moveX(self, amount, groupsList):
         isIn = False
         self.rect.x += amount
-        for i in range(0, 4):
-            if self in groupsList[i].sprites():
-                groupsList[i].remove(self)
-                isIn = True
-            tick = 0
-            if pygame.sprite.spritecollide(self, groupsList[i], False) or not self.hasGoodPos() and tick <= (self.speed + 2):
-                self.rect.x -= amount
-                tick += 1
-            if isIn:
-                groupsList[i].add(self)
-                isIn = False
-            if self.animTick < 4:
-                self.toTargetImg = self.image2
-            else:
-                self.toTargetImg = self.image1
-                if self.animTick > 8:
-                    self.animTick = 0
-            self.animTick += 1
+        for i in range(0, 11):
+            if i < 4 or i == 10:
+                if self in groupsList[i].sprites():
+                    groupsList[i].remove(self)
+                    isIn = True
+                tick = 0
+                if pygame.sprite.spritecollide(self, groupsList[i], False) or not self.hasGoodPos() and tick <= (self.speed + 2):
+                    self.rect.x -= amount
+                    tick += 1
+                if isIn:
+                    groupsList[i].add(self)
+                    isIn = False
+        if self.animTick < 6:
+            self.toTargetImg = self.image2
+        else:
+            self.toTargetImg = self.image1
+            if self.animTick > 12:
+                self.animTick = 0
+        self.animTick += 1
 
 
     # tak jak moveX tylko że hryzontalnie
     def moveY(self, amount, groupsList):
         isIn = False
         self.rect.y += amount
-        for i in range(0, 4):
-            if self in groupsList[i].sprites():
-                groupsList[i].remove(self)
-                isIn = True
-            tick = 0
-            if pygame.sprite.spritecollide(self, groupsList[i], False) or not self.hasGoodPos() and tick <= (self.speed + 2):
-                self.rect.y -= amount
-                tick += 1
-            if isIn:
-               groupsList[i].add(self)
-               isIn = False
-            if self.animTick < 4:
-                self.toTargetImg = self.image2
-            else:
-                self.toTargetImg = self.image1
-                if self.animTick > 8:
-                    self.animTick = 0
-            self.animTick += 1
+        for i in range(0, 11):
+            if i < 4 or i == 10:
+                if self in groupsList[i].sprites():
+                    groupsList[i].remove(self)
+                    isIn = True
+                tick = 0
+                if pygame.sprite.spritecollide(self, groupsList[i], False) or not self.hasGoodPos() and tick <= (self.speed + 2):
+                    self.rect.y -= amount
+                    tick += 1
+                if isIn:
+                   groupsList[i].add(self)
+                   isIn = False
+        if self.animTick < 6:
+            self.toTargetImg = self.image2
+        else:
+            self.toTargetImg = self.image1
+            if self.animTick > 12:
+                self.animTick = 0
+        self.animTick += 1
 
     def moveUp(self, groupsList):
         self.moveY(-self.speed, groupsList)
@@ -144,6 +146,8 @@ class Player(Tank):
     def __init__(self, x, y, image, image1, image2, hp, speed, bulletImg, delay):
         super().__init__(x, y, image, image1, image2, hp, speed, bulletImg)
         self.delay = delay
+        self.shootSound = pygame.mixer.Sound('Music/shoot.wav')
+
 
     def update(self, handler, groupsList):
         #  sterowanie(sprawdzanie czy został wciśniety klawisz aż do wykrycia jednego z nich)
@@ -164,8 +168,11 @@ class Player(Tank):
                 break
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             if self.delay <= 0:
+                pygame.mixer.Sound.play(self.shootSound)
                 self.shoot(handler)
-                self.delay = 25
+                self.delay = 19
+        else:
+            self.delay -= 1.5
         self.delay -= 1
 
 
@@ -174,40 +181,60 @@ class Base(GameObject):
         super().__init__(x, y, image, 1)
 
     def update(self, groupsList, gameover):
-        if pygame.sprite.spritecollide(self, groupsList[1], False):
-            gameover()
+        if pygame.sprite.spritecollide(self, groupsList[2], False):
+            groupsList[0].sprites()[0].hp = 0
 
 
 class Enemy(Tank):
-    def __init__(self, x, y, image, image1, image2, hp, speed, bulletImg, delay):
+    def __init__(self, x, y, image, image1, image2, hp, speed, bulletImg, delay, eyesight):
         super().__init__(x, y, image, image1, image2, hp, speed, bulletImg)
         self.delay = delay
         self.r = random.randrange(2)
         self.tick = 0
         self.change = random.randrange(100, 200)
+        self.eyesight = eyesight
+        self.dir = random.randrange(5)
+        self.target = ""
 
     def trace(self, player, groupsList, handler):
         shooted = False
         player = player.sprites()[0]
-        diffX = self.rect.x - player.rect.x
-        diffY = self.rect.y - player.rect.y
-        if self.r == 1 and (abs(diffY) - self.speed) > 0:
-            if diffY >= 0:
-                self.moveUp(groupsList)
-            else:
-                self.moveDown(groupsList)
-        elif (abs(diffX) - self.speed) > 0:
-            if diffX >= 0:
-                self.moveLeft(groupsList)
-            else:
-                self.moveRight(groupsList)
+        base = groupsList[7].sprites()[0]
+        if min(abs(self.rect.x - player.rect.x), abs(self.rect.x - player.rect.x)) <= min(abs(self.rect.x - base.rect.x), abs(self.rect.y - base.rect.y)):
+            diffX = self.rect.x - player.rect.x
+            diffY = self.rect.y - player.rect.y
+            self.target = "player"
         else:
-            if diffY > 0:
-                self.moveUp(groupsList)
-            elif diffY < 0:
-                self.moveDown(groupsList)
+            diffX = self.rect.x - base.rect.x
+            diffY = self.rect.y - base.rect.y
+            self.target = "base"
 
-        if ((abs(diffX) - self.speed -3) < 0) or ((abs(diffY) - self.speed -3) < 0):
+        if max(abs(diffX), abs(diffY)) <= self.eyesight:
+            if self.r == 1 and (abs(diffY) - self.speed+1) > 0:
+                if diffY >= 0:
+                    self.moveUp(groupsList)
+                else:
+                    self.moveDown(groupsList)
+            elif (abs(diffX) - self.speed+1) > 0:
+                if diffX >= 0:
+                    self.moveLeft(groupsList)
+                else:
+                    self.moveRight(groupsList)
+            else:
+                if diffY > 0:
+                    self.moveUp(groupsList)
+                elif diffY < 0:
+                    self.moveDown(groupsList)
+        else:
+            if self.dir == 0:
+                self.moveRight(groupsList)
+            elif self.dir == 1:
+                self.moveLeft(groupsList)
+            elif self.dir == 2:
+                self.moveUp(groupsList)
+            elif self.dir == 3 or self.dir == 5:
+                self.moveDown(groupsList)
+        if (((abs(diffX) - self.speed -3) < 0) or ((abs(diffY) - self.speed -3) < 0)) and self.target != "base":
             if self.delay <= 0:
                 self.shoot(handler)
                 self.delay = 45
@@ -215,7 +242,8 @@ class Enemy(Tank):
 
         if self.tick >= self.change:
             self.r = random.randrange(2)
-            self.change = random.randrange(100, 160)
+            self.dir = random.randrange(6)
+            self.change = random.randrange(60, 150)
             self.tick = 0
         self.tick +=  1
         if shooted:
@@ -248,6 +276,8 @@ class Bullet(GameObject):
         if not self.hasGoodPos():
             groupsList[3].remove(self)
         for i in range(0, 3):
+            if self.owner in groupsList[i]:
+                continue
             if pygame.sprite.spritecollide(self, groupsList[i], False):  # Jeśli w coś uderzy to tworzy wybuch - boom
                 groupsList[4].add(Boom(self.rect.x - 17, self.rect.y -17, self.boomImage, self.owner))
                 groupsList[3].remove(self)
@@ -276,16 +306,18 @@ class Boom (GameObject):
                     groupsList[i].remove(self.owner)
                     for gameObject in pygame.sprite.spritecollide(self, groupsList[i], False):
                         if gameObject.decreaseHp(1) <= 0:
-                            if i == 0:
-                                gameover()
-                            groupsList[i].remove(gameObject)
+                            if i== 2:
+                                groupsList[4].add(BigBoom(self.rect.x, self.rect.y, pygame.image.load('Sprites/boom11.png')))
+                            if i != 0:
+                                groupsList[i].remove(gameObject)
                     groupsList[i].add(self.owner)
                 else:
                     for gameObject in pygame.sprite.spritecollide(self, groupsList[i], False):
                         if gameObject.decreaseHp(1) <= 0:
-                            if i == 0:
-                                gameover()
-                            groupsList[i].remove(gameObject)
+                            if i ==2:
+                                groupsList[4].add(BigBoom(self.rect.x -23, self.rect.y -23, pygame.image.load('Sprites/boom11.png')))
+                            if i != 0:
+                                groupsList[i].remove(gameObject)
 
             self.rect.x -= 6
             self.rect.y -= 6
@@ -308,12 +340,45 @@ class Boom (GameObject):
             groupsList[4].remove(self)
         self.timer += 1
 
+class BigBoom(GameObject):
+    def __init__(self, x, y, image):
+        super().__init__(x, y, image, 1)
+        self.music = pygame.mixer.Sound('Music/boom.wav')
+        self.img1 = pygame.image.load('Sprites/boom11.png')
+        self.img2 = pygame.image.load('Sprites/boom12.png')
+        self.img3 = pygame.image.load('Sprites/boom13.png')
+        self.img4 = pygame.image.load('Sprites/boom14.png')
+        self.img5 = pygame.image.load('Sprites/boom15.png')
+        self.img6 = pygame.image.load('Sprites/boom16.png')
+        self.img7 = pygame.image.load('Sprites/boom17.png')
+        self.timer = 0
+        pygame.mixer.Sound.play(self.music)
+
+    def update(self, groupsList, gameover):
+        if self.timer >= 0 and self.timer < 3:
+            self.image = self.img1
+        elif self.timer >= 3 and self.timer < 6:
+            self.image = self.img2
+        elif self.timer >= 6 and self.timer < 9:
+            self.image = self.img3
+        elif self.timer >=9 and self.timer < 12:
+            self.image = self.img4
+        elif self.timer >= 12 and self.timer < 15:
+            self.image = self.img5
+        elif self.timer >= 15 and self.timer < 20:
+            self.image = self.img6
+        elif self.timer >= 20 and self.timer < 25:
+            self.image = self.img7
+        else:
+            groupsList[4].remove(self)
+        self.timer += 1
+
 
 
 # blok cegieł
 class NormalBricksBlock(GameObject):
-    def __init__(self, x, y, image):
-        super().__init__(x, y, image, 1)
+    def __init__(self, x, y, image,hp):
+        super().__init__(x, y, image, hp)
 
 
 class Bush(GameObject):
@@ -326,14 +391,42 @@ class Plate(GameObject):
         super().__init__(x, y, image, 1)
 
 
+class Water(GameObject):
+    def __init__(self, x, y):
+        super().__init__(x, y, pygame.image.load('Sprites/water1.png'), 21)
+        self.timer = 0
+        self.image1 = pygame.image.load('Sprites/water1.png')
+        self.image2 = pygame.image.load('Sprites/water2.png')
+
+    def update(self):
+        if self.timer < 30:
+            self.image = self.image1
+        elif self.timer < 60:
+            self.image = self.image2
+        else:
+            self.timer = 0
+
+        self.timer += 1
+
+
+
+
+class Gui(GameObject):
+    def __init__(self, x, y, image):
+        super().__init__(x, y, image, 1)
+
+
 class Button(GameObject):
-    def __init__(self, x, y, image1, image2, image3, label, action=None):
+    def __init__(self, x, y, image1, image2, image3, label, action = None, arg=None, arg2 = None):
         super().__init__(x, y, image1, None)
         self.image1 = image1
         self.image2 = image2
         self.image3 = image3
         self.label = label
         self.action = action
+        self.clicked = False
+        self.arg = arg
+        self.arg2 = arg2
 
     def update(self):
         mouse = pygame.mouse.get_pos()
@@ -341,23 +434,78 @@ class Button(GameObject):
             self.image = self.image2
             if pygame.mouse.get_pressed()[0] == 1:
                 self.image = self.image3
-                if self.action != None:
-                    self.action()
-
+                self.clicked = True
+            elif pygame.mouse.get_pressed()[0] != 1:
+                if self.clicked:
+                    if self.action != None and self.arg == None:
+                        self.action()
+                    elif self.action != None and  self.arg != None and self.arg2 == None:
+                        self.action(self.arg)
+                    elif self.action != None and  self.arg != None and self.arg2 != None:
+                        self.action(self.arg, self.arg2)
         else:
+            self.clicked = False
             self.image = self.image1
+
+class Spawner(GameObject):
+    def __init__(self, x, y,):
+        super().__init__(x, y, pygame.image.load('Sprites/empty.png'), 1)
+        self.tick = 0
+        self.enemy1 = (pygame.image.load('Sprites/enemy1.png'), pygame.image.load('Sprites/enemy1.png'), pygame.image.load('Sprites/enemy12.png'), 2, 2, pygame.image.load('Sprites/bullet.png'), 1, 350)
+
+    def update(self, groupsList):
+        if self.tick < 2:
+            self.image = pygame.image.load('Sprites/empty.png')
+        elif self.tick < 5:
+            self.image = pygame.image.load('Sprites/spawn1.png')
+        elif self.tick < 10:
+            self.image = pygame.image.load('Sprites/spawn2.png')
+        elif self.tick < 15:
+            self.image = pygame.image.load('Sprites/spawn3.png')
+        elif self.tick < 20:
+            self.image = pygame.image.load('Sprites/spawn2.png')
+        elif self.tick < 25:
+            self.image = pygame.image.load('Sprites/spawn1.png')
+        elif self.tick < 30:
+            self.image = pygame.image.load('Sprites/spawn2.png')
+        else:
+            groupsList[9].remove(self)
+            groupsList[2].add(
+                Enemy(self.rect.x, self.rect.y, self.enemy1[0], self.enemy1[1], self.enemy1[2], self.enemy1[3],
+                      self.enemy1[4], self.enemy1[5], self.enemy1[6], self.enemy1[7]))
+        if pygame.sprite.spritecollide(self, groupsList[0], False) or pygame.sprite.spritecollide(self, groupsList[2], False) or pygame.sprite.spritecollide(self, groupsList[1], False):
+            self.image = pygame.image.load('Sprites/empty.png')
+            if self.rect.x < 1000:
+                self.rect.x += 55
+            else:
+                self.rect.x -= 55
+        if self in groupsList[9]:
+            groupsList[9].remove(self)
+            if pygame.sprite.spritecollide(self, groupsList[9], False):
+                self.image = pygame.image.load('Sprites/empty.png')
+                if self.rect.x < 1000:
+                    self.rect.x += 55
+                else:
+                    self.rect.x -= 55
+            groupsList[9].add(self)
+        self.tick += 1
 
 
 class Menu():
     def __init__(self):
         self.buttonGroup = pygame.sprite.Group([])
+        self.image = pygame.image.load('Sprites/menu.png')
 
     def update(self, displaysurface):
+        displaysurface.blit(self.image, (0,0))
         self.buttonGroup.update()
         self.buttonGroup.draw(displaysurface)
 
     def addButton(self, button):
         self.buttonGroup.add(button)
+
+    def clearButtons(self):
+        self.buttonGroup = pygame.sprite.Group([])
 
 
 
