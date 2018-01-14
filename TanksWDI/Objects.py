@@ -11,6 +11,7 @@ class GameObject(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         self.hp = hp
+        self.hasShield = False
 
     # Sprawdza czy obiekt nie jest poza mapa
     def hasGoodPos(self):
@@ -20,7 +21,8 @@ class GameObject(pygame.sprite.Sprite):
             return True
 
     def decreaseHp(self, amount):
-        self.hp -= amount
+        if not self.hasShield:
+            self.hp -= amount
         return self.hp
 
 # klasa po której dziedzicą wszystkie tanki
@@ -146,10 +148,11 @@ class Player(Tank):
         self.delay = delay
         self.shootSound = pygame.mixer.Sound('Music/shoot.wav')
         self.moveSound = pygame.mixer.music.load('Music/mv.wav')
+        self.shieldTimer = 0
         pygame.mixer.music.play(-1)
 
 
-    def update(self, handler, groupsList):
+    def update(self, handler, groupsList, displaysurface):
         #  sterowanie(sprawdzanie czy został wciśniety klawisz aż do wykrycia jednego z nich)
         while True:
             if pygame.key.get_pressed()[pygame.K_UP] == 1:
@@ -180,6 +183,23 @@ class Player(Tank):
             self.delay -= 1.5*(3/2)
         self.delay -= 1*(3/2)
 
+        if self.hasShield:
+            self.shieldTimer -= 1
+            if self.shieldTimer <= 0:
+                self.hasShield = False
+            else:
+                self.updateShield(displaysurface)
+
+    def updateShield(self, displaysurface):
+        sh = GameObject(self.rect.x - 7, self.rect.y - 7, pygame.image.load('Sprites/shiel.png'), 1)
+        shg = pygame.sprite.Group([sh])
+        sh.rect.x = self.rect.x - 7
+        sh.rect.y = self.rect.y - 7
+        shg.draw(displaysurface)
+
+    def giveShield(self, groupsList):
+        self.shieldTimer = 200
+        self.hasShield = True
 
 class Base(GameObject):
     def __init__(self, x, y, image):
@@ -385,9 +405,66 @@ class BigBoom(GameObject):
         elif self.timer >= 20 and self.timer < 25:
             self.image = self.img7
         else:
+            choice = random.randrange(6)
+            if choice == 1:
+                groupsList[12].add(HpItem(self.rect.x + 15, self.rect.y + 15))
+            elif choice == 2:
+                groupsList[12].add(ShieldItem(self.rect.x + 15, self.rect.y + 15))
+            elif choice == 3:
+                groupsList[12].add(BaseItem(self.rect.x + 15, self.rect.y + 15))
             groupsList[4].remove(self)
         self.timer += 1*(3/2)
 
+class Item(GameObject):
+    def __init__(self, x, y, image):
+        super().__init__(x, y, image, 1)
+        self.sound = pygame.mixer.Sound('Music/item.wav')
+        self.timer = 160
+
+    def update(self, groupsList):
+        if pygame.sprite.spritecollide(self, groupsList[0], False):
+            pygame.mixer.Sound.play(self.sound)
+            self.pickup(groupsList)
+            groupsList[12].remove(self)
+        if self.timer <= 0:
+            groupsList[12].remove(self)
+        self.timer -= 1
+
+    def pickup(self, groupsList):
+        pass
+
+
+class HpItem(Item):
+    def __init__(self, x, y):
+        super().__init__(x, y, pygame.image.load('Sprites/hp.png'))
+
+    def pickup(self, groupsList):
+        groupsList[0].sprites()[0].hp += 1
+
+
+class ShieldItem(Item):
+    def __init__(self, x, y):
+        super().__init__(x, y, pygame.image.load('Sprites/shield.png'))
+
+    def pickup(self, groupsList):
+        groupsList[0].sprites()[0].giveShield(groupsList )
+
+class BaseItem(Item):
+    def __init__(self, x, y):
+        super().__init__(x, y, pygame.image.load('Sprites/base.png'))
+
+    def pickup(self, groupsList):
+        x = 410
+        y = 610
+        bricksImg = pygame.image.load('Sprites/bricks.png')
+        groupsList[1].add(NormalBricksBlock(x + 25, y + 25, bricksImg, 1))
+        groupsList[1].add(NormalBricksBlock(x + 50, y + 25, bricksImg, 1))
+        groupsList[1].add(NormalBricksBlock(x + 75, y + 25, bricksImg, 1))
+        groupsList[1].add(NormalBricksBlock(x + 100, y + 25, bricksImg, 1))
+        groupsList[1].add(NormalBricksBlock(x + 25, y + 50, bricksImg, 1))
+        groupsList[1].add(NormalBricksBlock(x + 25, y + 75, bricksImg, 1))
+        groupsList[1].add(NormalBricksBlock(x + 100, y + 50, bricksImg, 1))
+        groupsList[1].add(NormalBricksBlock(x + 100, y + 75, bricksImg, 1))
 
 
 # blok cegieł

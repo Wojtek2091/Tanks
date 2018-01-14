@@ -19,6 +19,7 @@ class GameMenager():
         self.t10 = Gui(1175, 450, pygame.image.load('Sprites/tank.png'))
         tlist = pygame.sprite.Group([])
         groupsList.append(tlist)
+        groupsList.append(pygame.sprite.Group([]))
         groupsList[11].add(self.t1)
         groupsList[11].add(self.t2)
         groupsList[11].add(self.t3)
@@ -184,20 +185,20 @@ def buildLevel(B, W, H, mode):
                    "      P      B   LLLL"
         modearg = 'levels'
     else:
-        levelmap = "E    X    E   X     E" \
-                   "     X        X      " \
-                   "     XXXXXXXXXX      " \
-                   "     X        X      " \
-                   "LLLLLX BBBBBB XLLLLLL" \
-                   "LLLLLX BLLLLB XLLLLLL" \
-                   "XXXXXX BLLLLB XXXXXXX" \
-                   "BBBBBX BLLLLB XBBBBBB" \
-                   "BBBBBX BBBBBB XBBBBBB" \
-                   "     X        X      " \
-                   "     XXXXXXXXXX      " \
-                   "                     " \
-                   "        S            " \
-                   "      P              "
+        levelmap = "E    X    E   X     E"\
+                   "LLLXXXX       X X    "\
+                   "LLLXXXX      BBBBBXXX"\
+                   "   XXXX UUU  BBBBLLLL"\
+                   "   XWWW  U       LLLL"\
+                   "UUUX W      LLLL     "\
+                   "UUUX  BBB   LLLLXXXXX"\
+                   "BBBX  BBB   LLLL WU B"\
+                   "BBBLLLLLLLLLLLLL W  B"\
+                   "  W     XXBBBBB  W  B"\
+                   "  W     XXBBBBBXXXX B"\
+                   "XXXUU          XXUU B"\
+                   "UU      S           B"\
+                   "      P             B"
         modearg = 'arcade'
     neutralGroup, enemyGroup, playerGroup, bushGroup, plateGroup, baseGroup, waterGroup = buildMap(levelmap, B, W, H)
     bulletGroup = pygame.sprite.Group([])

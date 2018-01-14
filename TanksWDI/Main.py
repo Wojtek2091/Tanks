@@ -1,4 +1,4 @@
-import pygame, sys, random, time
+import pygame, sys, shelve
 from pygame.locals import *
 from LevelBuilder import buildLevel
 from Objects import Menu, Button, GameObject
@@ -7,9 +7,9 @@ from Objects import Menu, Button, GameObject
 
 # GameHandler iteruje po każdej grupie Spritów w lście i wywołuche ich metody render i update
 class GameHandler:
-    # groups: 0-player 1-neutral, 2-enemy, 3-bullets, 4-boom 5-bushes , 6-plates, 7-base, 8-gui, 9-spawnerGroup 10 - water
-    def __init__(self, disaplysurface, gameover, gameMenager, groupsList = None):
-        self.displaysurface = disaplysurface
+    # groups: 0-player 1-neutral, 2-enemy, 3-bullets, 4-boom 5-bushes , 6-plates, 7-base, 8-gui, 9-spawnerGroup 10 - water 12-items
+    def __init__(self, displaysurface, gameover, gameMenager, groupsList = None):
+        self.displaysurface = displaysurface
         self.gameover = gameover
         self.gameMenager = gameMenager
         if groupsList is None:
@@ -19,20 +19,22 @@ class GameHandler:
         self.gameGui = gameGui(self.groupsList)
 
     def update(self):
-        self.groupsList[0].update(self, self.groupsList)
+        self.groupsList[0].update(self, self.groupsList, self.displaysurface)
         self.groupsList[2].update(self, self.groupsList)
         self.groupsList[3].update(self.groupsList)
         self.groupsList[4].update(self.groupsList, self.gameover)
         self.groupsList[7].update(self.groupsList, self.gameover)
         self.groupsList[9].update(self.groupsList)
         self.groupsList[10].update()
+        self.groupsList[12].update(self.groupsList)
         self.gameGui.update()
         self.gameMenager.update(self.groupsList)
 
     def render(self, displaysurface):
         self.groupsList[6].draw(displaysurface)
-        for i in range(0, 12):
-            if i != 6:
+        self.groupsList[12].draw(displaysurface)
+        for i in range(0, 13):
+            if i != 6 and i != 12:
                 self.groupsList[i].draw(displaysurface)
 
 
@@ -146,13 +148,13 @@ class main():
             self.menu.clearButtons()
             pygame.mixer.Sound.play(self.winSound)
             self.menu.addButton(
-                Button(315, 50, pygame.image.load('Sprites/Menu/def1.png'), pygame.image.load('Sprites/Menu/def1.png'),
+                Button(335, 50, pygame.image.load('Sprites/Menu/def1.png'), pygame.image.load('Sprites/Menu/def1.png'),
                        pygame.image.load('Sprites/Menu/def1.png'), "sign"))
             self.menu.addButton(
-                Button(440, 280, pygame.image.load('Sprites/Menu/sc.png'), pygame.image.load('Sprites/Menu/sc.png'),
+                Button(460, 280, pygame.image.load('Sprites/Menu/sc.png'), pygame.image.load('Sprites/Menu/sc.png'),
                        pygame.image.load('Sprites/Menu/sc.png'), "sign"))
             self.menu.addButton(
-                Button(440, 350, pygame.image.load('Sprites/Menu/hsc.png'), pygame.image.load('Sprites/Menu/hsc.png'),
+                Button(460, 350, pygame.image.load('Sprites/Menu/hsc.png'), pygame.image.load('Sprites/Menu/hsc.png'),
                        pygame.image.load('Sprites/Menu/hsc.png'), "sign"))
             self.menu.addButton(
                 Button(535, 450, pygame.image.load('Sprites/Menu/bm1.png'), pygame.image.load('Sprites/Menu/bm2.png'),
@@ -161,9 +163,17 @@ class main():
                 Button(535, 550, pygame.image.load('Sprites/Menu/be1.png'), pygame.image.load('Sprites/Menu/be2.png'),
                        pygame.image.load('Sprites/Menu/be3.png'), "exit", sys.exit))
             self.myfont = pygame.font.SysFont('Comic Sans MS', 67)
+            d = shelve.open('data')
+            hiscore = d['score']
+            if score > hiscore:
+                d['score'] = score
+                hiscore = score
             scoresurf = self.myfont.render(str(score), False, (255, 102, 0))
+            hiscoresurf = self.myfont.render(str(hiscore), False, (255, 102, 0))
             self.menu.addButton(
-                Button(650, 280, scoresurf, scoresurf, scoresurf, "exit"))
+                Button(670, 280, scoresurf, scoresurf, scoresurf, "Sprite"))
+            self.menu.addButton(
+                Button(720, 360, hiscoresurf, hiscoresurf, hiscoresurf, "Sprite"))
 
 
 def play(mode, main): # pętla gry
@@ -189,26 +199,6 @@ def play(mode, main): # pętla gry
         fpsClock.tick(FPS)
     gmenager.gameEnd(main, playing)
 
-'''def gameover():
-    FPS = 60
-    fpsClock = pygame.time.Clock()
-    pygame.init()
-    clip = Menu ()
-    clip.addButton(Button(250, 100, pygame.image.load('Sprites/Menu/go.png'), pygame.image.load('Sprites/Menu/go.png'),
-                    pygame.image.load('Sprites/Menu/go.png'), "go"))
-    clip.addButton(Button(535, 300, pygame.image.load('Sprites/Menu/bs1.png'), pygame.image.load('Sprites/Menu/bs2.png'),
-                    pygame.image.load('Sprites/Menu/bs3.png'), "start", main))
-    clip.addButton(Button(535, 400, pygame.image.load('Sprites/Menu/be1.png'), pygame.image.load('Sprites/Menu/be2.png'),
-                    pygame.image.load('Sprites/Menu/be3.png'), "start", sys.exit))
-    while True:
-        DISPLAYSURFACE.fill((70, 70, 70))
-        clip.update(DISPLAYSURFACE)  
-        for event in pygame.event.get():
-            if event.type == pygame.locals.QUIT:
-                pygame.quit()
-                sys.exit()
-        pygame.display.update()
-        fpsClock.tick(FPS)'''
 
 pygame.mixer.pre_init(44100, -16, 1, 1024)
 pygame.mixer.init()
