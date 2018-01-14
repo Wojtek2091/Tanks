@@ -220,7 +220,7 @@ def buildMap(toParse, BLOCKSIZE, WIDTH, HEIGHT):
     plateGroup = pygame.sprite.Group([])
     baseGroup = pygame.sprite.Group([])
     waterGroup = pygame.sprite.Group([])
-    enemy1 = (pygame.image.load('Sprites/enemy1.png'), pygame.image.load('Sprites/enemy1.png'), pygame.image.load('Sprites/enemy12.png'), 2, 2, pygame.image.load('Sprites/bullet.png'), 1, 350)
+    enemy1 = (pygame.image.load('Sprites/enemy1.png'), pygame.image.load('Sprites/enemy1.png'), pygame.image.load('Sprites/enemy12.png'), 2, 3, pygame.image.load('Sprites/bullet.png'), 1, 350)
     bricksImg = pygame.image.load('Sprites/bricks.png')
     bbricksImg = pygame.image.load('Sprites/bbricks.png')
     bushImg = pygame.image.load('Sprites/bush.png')
@@ -257,7 +257,7 @@ def buildMap(toParse, BLOCKSIZE, WIDTH, HEIGHT):
         elif ch == "W":
             waterGroup.add(Water(x, y))
         elif ch == "P":
-            playerGroup.add(pygame.sprite.Group([Player(x, y, pygame.image.load('Sprites/player.png'), pygame.image.load('Sprites/player.png'), pygame.image.load('Sprites/player2.png'), 5, 3, pygame.image.load('Sprites/bullet.png'), 1)]))
+            playerGroup.add(pygame.sprite.Group([Player(x, y, pygame.image.load('Sprites/player.png'), pygame.image.load('Sprites/player.png'), pygame.image.load('Sprites/player2.png'), 5, 5, pygame.image.load('Sprites/bullet.png'), 1)]))
         if (x + BLOCKSIZE) >= WIDTH:
             x = 10
             y += BLOCKSIZE

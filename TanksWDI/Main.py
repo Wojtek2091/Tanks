@@ -1,4 +1,4 @@
-import pygame, sys, random
+import pygame, sys, random, time
 from pygame.locals import *
 from LevelBuilder import buildLevel
 from Objects import Menu, Button, GameObject
@@ -64,8 +64,8 @@ DISPLAYSURFACE = pygame.display.set_mode((WIDTH, HEIGHT))
 
 class main():
     def __init__(self):
-        self.winSound = pygame.mixer.Sound('Music/wnw.wav')
-        #self.loseSound = pygame.mixer.Sound('lose1.wav')
+        self.winSound = pygame.mixer.Sound('Music/win.wav')
+        self.loseSound = pygame.mixer.Sound('Music/lose.wav')
         inMenu = True
         FPS = 60
         fpsClock = pygame.time.Clock()
@@ -115,6 +115,7 @@ class main():
                             pygame.image.load('Sprites/Menu/ba3.png'), "arcade", play, 'arcade', self))
 
     def endStatus(self, mode,  score):
+        pygame.mixer.music.stop()
         if mode == 'levels' and score == 1:
             self.menu.clearButtons()
             pygame.mixer.Sound.play(self.winSound)
@@ -130,7 +131,7 @@ class main():
 
         elif mode == 'levels' and score == -1:
             self.menu.clearButtons()
-            #pygame.mixer.Sound.play(self.loseSound)
+            pygame.mixer.Sound.play(self.loseSound)
             self.menu.addButton(
                 Button(315, 50, pygame.image.load('Sprites/Menu/def1.png'), pygame.image.load('Sprites/Menu/def1.png'),
                        pygame.image.load('Sprites/Menu/def1.png'), "sign"))
@@ -143,6 +144,7 @@ class main():
 
         elif mode == 'arcade':
             self.menu.clearButtons()
+            pygame.mixer.Sound.play(self.winSound)
             self.menu.addButton(
                 Button(315, 50, pygame.image.load('Sprites/Menu/def1.png'), pygame.image.load('Sprites/Menu/def1.png'),
                        pygame.image.load('Sprites/Menu/def1.png'), "sign"))
@@ -166,22 +168,24 @@ class main():
 
 def play(mode, main): # pętla gry
     playing = 0
-    FPS = 60
-    fpsClock = pygame.time.Clock()
+    FPS = 40
     pygame.init()
+    fpsClock = pygame.time.Clock()
     pygame.display.set_caption('Tanki!')
     glist , gmenager = buildLevel(BLOCKSIZE, PWIDTH + PADDING, HEIGHT, mode)
     gameHandler = GameHandler(DISPLAYSURFACE, None, gmenager, glist)
     while playing == 0:  # główna pętla
         DISPLAYSURFACE.fill((0, 0, 0))
         gameHandler.render(DISPLAYSURFACE)
-        gameHandler.update()
+        if fpsClock.get_fps() > 0:
+            gameHandler.update()
         for event in pygame.event.get():
             if event.type == pygame.locals.QUIT:
                 pygame.quit()
                 sys.exit()
         playing = gmenager.status()
         pygame.display.update()
+        print(fpsClock.get_fps())
         fpsClock.tick(FPS)
     gmenager.gameEnd(main, playing)
 
@@ -208,4 +212,5 @@ def play(mode, main): # pętla gry
 
 pygame.mixer.pre_init(44100, -16, 1, 1024)
 pygame.mixer.init()
+pygame.mixer.music.load('Music/button1.wav')
 gra = main()

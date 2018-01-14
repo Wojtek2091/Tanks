@@ -25,7 +25,7 @@ class GameObject(pygame.sprite.Sprite):
 
 # klasa po której dziedzicą wszystkie tanki
 class Tank(GameObject):
-    bulletSpeed = 20
+    bulletSpeed = 20*(3/2)
 
     def __init__(self, x, y, image, image1, image2, hp, speed, bulletImg):
         super().__init__(x,y,image, hp)
@@ -61,7 +61,7 @@ class Tank(GameObject):
                     groupsList[i].remove(self)
                     isIn = True
                 tick = 0
-                if pygame.sprite.spritecollide(self, groupsList[i], False) or not self.hasGoodPos() and tick <= (self.speed + 2):
+                if pygame.sprite.spritecollide(self, groupsList[i], False) or not self.hasGoodPos():
                     self.rect.x -= amount
                     tick += 1
                 if isIn:
@@ -73,7 +73,7 @@ class Tank(GameObject):
             self.toTargetImg = self.image1
             if self.animTick > 12:
                 self.animTick = 0
-        self.animTick += 1
+        self.animTick += 1**(3/2)
 
 
     # tak jak moveX tylko że hryzontalnie
@@ -86,7 +86,7 @@ class Tank(GameObject):
                     groupsList[i].remove(self)
                     isIn = True
                 tick = 0
-                if pygame.sprite.spritecollide(self, groupsList[i], False) or not self.hasGoodPos() and tick <= (self.speed + 2):
+                if pygame.sprite.spritecollide(self, groupsList[i], False) or not self.hasGoodPos():
                     self.rect.y -= amount
                     tick += 1
                 if isIn:
@@ -98,7 +98,7 @@ class Tank(GameObject):
             self.toTargetImg = self.image1
             if self.animTick > 12:
                 self.animTick = 0
-        self.animTick += 1
+        self.animTick += 1**(3/2)
 
     def moveUp(self, groupsList):
         self.moveY(-self.speed, groupsList)
@@ -141,30 +141,35 @@ class Tank(GameObject):
 
 #  klasa rozszerza klase tank
 class Player(Tank):
-    bulletSpeed = 20
-
     def __init__(self, x, y, image, image1, image2, hp, speed, bulletImg, delay):
         super().__init__(x, y, image, image1, image2, hp, speed, bulletImg)
         self.delay = delay
         self.shootSound = pygame.mixer.Sound('Music/shoot.wav')
+        self.moveSound = pygame.mixer.music.load('Music/mv.wav')
+        pygame.mixer.music.play(-1)
 
 
     def update(self, handler, groupsList):
         #  sterowanie(sprawdzanie czy został wciśniety klawisz aż do wykrycia jednego z nich)
         while True:
             if pygame.key.get_pressed()[pygame.K_UP] == 1:
+                pygame.mixer.music.unpause()
                 self.moveUp(groupsList)
                 break
             if pygame.key.get_pressed()[pygame.K_DOWN] == 1:
+                pygame.mixer.music.unpause()
                 self.moveDown(groupsList)
                 break
             if pygame.key.get_pressed()[pygame.K_RIGHT] == 1:
+                pygame.mixer.music.unpause()
                 self.moveRight(groupsList)
                 break
             if pygame.key.get_pressed()[pygame.K_LEFT] == 1:
+                pygame.mixer.music.unpause()
                 self.moveLeft(groupsList)
                 break
             else:
+                pygame.mixer.music.pause()
                 break
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             if self.delay <= 0:
@@ -172,8 +177,8 @@ class Player(Tank):
                 self.shoot(handler)
                 self.delay = 19
         else:
-            self.delay -= 1.5
-        self.delay -= 1
+            self.delay -= 1.5*(3/2)
+        self.delay -= 1*(3/2)
 
 
 class Base(GameObject):
@@ -238,14 +243,14 @@ class Enemy(Tank):
             if self.delay <= 0:
                 self.shoot(handler)
                 self.delay = 45
-        self.delay -= 1
+        self.delay -= 1*(3/2)
 
         if self.tick >= self.change:
             self.r = random.randrange(2)
             self.dir = random.randrange(6)
             self.change = random.randrange(60, 150)
             self.tick = 0
-        self.tick +=  1
+        self.tick += 1*(3/2)
         if shooted:
             return "shoot"
         else:
@@ -271,8 +276,6 @@ class Bullet(GameObject):
         self.owner = owner
 
     def update(self, groupsList):
-        self.rect.x += self.velocityX
-        self.rect.y += self.velocityY
         if not self.hasGoodPos():
             groupsList[3].remove(self)
         for i in range(0, 3):
@@ -281,6 +284,8 @@ class Bullet(GameObject):
             if pygame.sprite.spritecollide(self, groupsList[i], False):  # Jeśli w coś uderzy to tworzy wybuch - boom
                 groupsList[4].add(Boom(self.rect.x - 17, self.rect.y -17, self.boomImage, self.owner))
                 groupsList[3].remove(self)
+        self.rect.x += self.velocityX
+        self.rect.y += self.velocityY
 
 
 # Zmniejsza hp obiektów w swoim zasiegu
@@ -296,6 +301,8 @@ class Boom (GameObject):
         self.img6 = pygame.image.load('Sprites/boom6.png')
         self.img7 = pygame.image.load('Sprites/boom7.png')
         self.timer = -1
+        self.hit = pygame.mixer.Sound('Music/hit.wav')
+        self.hit2 = pygame.mixer.Sound('Music/hit2.wav')
 
     def update(self, groupsList, gameover):
         if self.timer < 0:
@@ -305,6 +312,10 @@ class Boom (GameObject):
                 if self.owner in groupsList[i]:
                     groupsList[i].remove(self.owner)
                     for gameObject in pygame.sprite.spritecollide(self, groupsList[i], False):
+                        if i == 0:
+                            pygame.mixer.Sound.play(self.hit)
+                        else:
+                            pygame.mixer.Sound.play(self.hit2)
                         if gameObject.decreaseHp(1) <= 0:
                             if i== 2:
                                 groupsList[4].add(BigBoom(self.rect.x, self.rect.y, pygame.image.load('Sprites/boom11.png')))
@@ -313,6 +324,10 @@ class Boom (GameObject):
                     groupsList[i].add(self.owner)
                 else:
                     for gameObject in pygame.sprite.spritecollide(self, groupsList[i], False):
+                        if i == 0:
+                            pygame.mixer.Sound.play(self.hit)
+                        else:
+                            pygame.mixer.Sound.play(self.hit2)
                         if gameObject.decreaseHp(1) <= 0:
                             if i ==2:
                                 groupsList[4].add(BigBoom(self.rect.x -23, self.rect.y -23, pygame.image.load('Sprites/boom11.png')))
@@ -338,7 +353,7 @@ class Boom (GameObject):
             self.image = self.img7
         else:
             groupsList[4].remove(self)
-        self.timer += 1
+        self.timer += 1*(3/2)
 
 class BigBoom(GameObject):
     def __init__(self, x, y, image):
@@ -371,7 +386,7 @@ class BigBoom(GameObject):
             self.image = self.img7
         else:
             groupsList[4].remove(self)
-        self.timer += 1
+        self.timer += 1*(3/2)
 
 
 
@@ -406,7 +421,7 @@ class Water(GameObject):
         else:
             self.timer = 0
 
-        self.timer += 1
+        self.timer += 1*(3/2)
 
 
 
@@ -427,11 +442,16 @@ class Button(GameObject):
         self.clicked = False
         self.arg = arg
         self.arg2 = arg2
+        self.play = True
+        self.sound1 = pygame.mixer.Sound('Music/button1.wav')
 
     def update(self):
         mouse = pygame.mouse.get_pos()
         if (mouse[0] >= self.rect.x and mouse[0] <= self.rect.x + self.image.get_width()) and (mouse[1] >= self.rect.y and mouse[1] <= self.rect.y + self.image.get_height()):
             self.image = self.image2
+            if self.play:
+                pygame.mixer.Sound.play(self.sound1)
+                self.play = False
             if pygame.mouse.get_pressed()[0] == 1:
                 self.image = self.image3
                 self.clicked = True
@@ -446,12 +466,13 @@ class Button(GameObject):
         else:
             self.clicked = False
             self.image = self.image1
+            self.play = True
 
 class Spawner(GameObject):
     def __init__(self, x, y,):
         super().__init__(x, y, pygame.image.load('Sprites/empty.png'), 1)
         self.tick = 0
-        self.enemy1 = (pygame.image.load('Sprites/enemy1.png'), pygame.image.load('Sprites/enemy1.png'), pygame.image.load('Sprites/enemy12.png'), 2, 2, pygame.image.load('Sprites/bullet.png'), 1, 350)
+        self.enemy1 = (pygame.image.load('Sprites/enemy1.png'), pygame.image.load('Sprites/enemy1.png'), pygame.image.load('Sprites/enemy12.png'), 2, 3, pygame.image.load('Sprites/bullet.png'), 1, 350)
 
     def update(self, groupsList):
         if self.tick < 2:
@@ -488,7 +509,7 @@ class Spawner(GameObject):
                 else:
                     self.rect.x -= 55
             groupsList[9].add(self)
-        self.tick += 1
+        self.tick += 1*(3/2)
 
 
 class Menu():
